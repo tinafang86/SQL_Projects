@@ -1,4 +1,22 @@
-## Project 2: TLC (Transaction Control)
+## Project 2: TLC (Transaction Control Language)
+#### 0.TCL精髓：
+- 轉帳開啟一筆start transaction
+- 轉帳正確：commit
+- 轉帳錯誤：rollback回原始交易位置
+
+```sql
+START TRANSACTION;
+
+# id1用戶轉帳500元給id2用戶
+UPDATE account SET balance = balance - 500 WHERE id = 1;
+UPDATE account SET balance = balance + 500 WHERE id = 2;
+
+IF everything IS fine:
+COMMIT;
+ELSE:
+ROLLBACK;
+```
+
 #### 1. In my SQL Server, create a database named "transaction_control". Set charset=utf8mb4 and collation=utf8mb4_unicode_ci.
 ```sql
 CREATE DATABASE transaction_control CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -59,9 +77,3 @@ SELECT * FROM transaction_control.account;
 SELECT * FROM transaction_control.transfer;
 ```
 
-
-
-
-
-
-```

@@ -782,3 +782,278 @@ Output:
 | 3       | Annabelle | bella-@leetcode.com     |
 | 4       | Sally     | sally.come@leetcode.com |
 
+
+## 176. Second Highest Salary
+
+Write a solution to find the second highest distinct salary from the Employee table. If there is no second highest salary, return null (return None in Pandas).
+
+Input: 
+Employee table:
+
+| id | salary |
+|----|--------|
+| 1  | 100    |
+| 2  | 200    |
+| 3  | 300    |
+
+Output: 
+| SecondHighestSalary |
+|---------------------|
+| 200                 |
+
+-------
+Input: 
+Employee table:
+
+| id | salary |
+|----|--------|
+| 1  | 100    |
+
+Output: 
+
+| SecondHighestSalary |
+|---------------------|
+| null                |
+
+```sql
+WITH cte AS (
+select salary,
+       dense_rank() over(ORDER BY salary DESC) AS  'SecondHighestSalary'
+from Employee)
+SELECT ifnull(max(salary), null) AS SecondHighestSalary -- max(), min(), count()..在空集合上返回 NULL 的特性
+FROM cte
+WHERE SecondHighestSalary = 2;
+
+```
+
+## 178. Rank Scores
+
+Write a solution to find the rank of the scores. The ranking should be calculated according to the following rules:
+
+The scores should be ranked from the highest to the lowest.
+If there is a tie between two scores, both should have the same ranking.
+After a tie, the next ranking number should be the next consecutive integer value. In other words, there should be no holes between ranks.
+Return the result table ordered by score in descending order.
+
+[簡單]：透過dense_rank()排序即可
+Input: 
+Scores table:
+
+| id | score |
+|----|-------|
+| 1  | 3.50  |
+| 2  | 3.65  |
+| 3  | 4.00  |
+| 4  | 3.85  |
+| 5  | 4.00  |
+| 6  | 3.65  |
+
+Output: 
+
+| score | rank |
+|-------|------|
+| 4.00  | 1    |
+| 4.00  | 1    |
+| 3.85  | 2    |
+| 3.65  | 3    |
+| 3.65  | 3    |
+| 3.50  | 4    |
+
+```sql
+SELECT 
+      score,
+      dense_rank() over(ORDER BY score DESC) AS 'rank'
+FROM Scores;
+```
+
+## 180. Consecutive Numbers
+
+Find all numbers that appear at least three times consecutively.
+Return the result table in any order.
+
+Input: 
+Logs table:
+| id | num |
+|----|-----|
+| 1  | 1   |
+| 2  | 1   |
+| 3  | 1   |
+| 4  | 2   |
+| 5  | 1   |
+| 6  | 2   |
+| 7  | 2   |
+
+Output: 
+
+| ConsecutiveNums |
+|-----------------|
+| 1               |
+
+- 使用lead()、lag()去找連續的num
+- lead()：找前一個數
+- lag()：找後一個數
+- 所以如果num = lead=lag，代表為連續3個相同數字
+
+```sql
+# Write your MySQL query statement below
+WITH CTE AS (
+SELECT id,
+       num,
+lag(num) over(order by id) as prev_num,
+lead(num) over(order by id) as next_num
+from Logs)
+SELECT DISTINCT(num) AS 'ConsecutiveNums'
+FROM CTE 
+WHERE num = prev_num AND num = next_num;
+```
+## 570. Managers with at Least 5 Direct Reports
+id is the primary key (column with unique values) for this table.
+Each row of this table indicates the name of an employee, their department, and the id of their manager.
+If managerId is null, then the employee does not have a manager.
+No employee will be the manager of themself.
+
+Write a solution to find managers with at least five direct reports.
+Return the result table in any order.
+
+- employee不能為manager
+- employee可能沒有manager -- null
+- 找出管理5位的manager name
+
+```sql
+WITH CTE AS (
+SELECT e1.id,
+       e1.name,
+       e1.managerId
+ FROM Employee AS e1
+JOIN Employee AS e2 
+ ON e1.id = e2.managerId
+GROUP BY e1.id, e1.name, e1.managerId
+HAVING count(e1.name)>=5)
+SELECT case when name is not null then name
+            when name is null then 'null'
+        end as 'name'
+FROM CTE;
+```
+
+## 2356. Number of Unique Subjects Taught by Each Teacher
+Write a solution to calculate the number of unique subjects each teacher teaches in the university. -->distinct
+Return the result table in any order.
+- 簡單題
+
+Input: 
+Teacher table:
+
+| teacher_id | subject_id | dept_id |
+|------------|------------|--------|
+| 1          | 2          | 3       |
+| 1          | 2          | 4       |
+| 1          | 3          | 3       |
+| 2          | 1          | 1       |
+| 2          | 2          | 1       |
+| 2          | 3          | 1       |
+| 2          | 4          | 1       |
+
+Output:  
+
+| teacher_id | cnt |
+|------------|-----|
+| 1          | 2   |
+| 2          | 4   |
+
+```sql
+SELECT 
+      teacher_id,
+      count(DISTINCT(subject_id)) AS 'cnt'
+FROM Teacher
+GROUP BY teacher_id;
+```
+
+## 1321. Restaurant Growth
+
+- there will be at least one customer every day
+- 計算moving average:current + last 6 days
+- average amount should be rounded to two decimal places.
+- hard
+
+Input: 
+Customer table:
+
+| customer_id | name         | visited_on   | amount      |
+|-------------|--------------|--------------|-------------|
+| 1           | Jhon         | 2019-01-01   | 100         |
+| 2           | Daniel       | 2019-01-02   | 110         |
+| 3           | Jade         | 2019-01-03   | 120         |
+| 4           | Khaled       | 2019-01-04   | 130         |
+| 5           | Winston      | 2019-01-05   | 110         | 
+| 6           | Elvis        | 2019-01-06   | 140         | 
+| 7           | Anna         | 2019-01-07   | 150         |
+| 8           | Maria        | 2019-01-08   | 80          |
+| 9           | Jaze         | 2019-01-09   | 110         | 
+| 1           | Jhon         | 2019-01-10   | 130         | 
+| 3           | Jade         | 2019-01-10   | 150         | 
+
+Output: 
+
+| visited_on   | amount       | average_amount |
+|--------------|--------------|----------------|
+| 2019-01-07   | 860          | 122.86         |
+| 2019-01-08   | 840          | 120            |
+| 2019-01-09   | 840          | 120            |
+| 2019-01-10   | 1000         | 142.86         |
+
+## 1327. List the Products Ordered in a Period
+
+Write a solution to get the names of products that have at least 100 units ordered in February 2020 and their amount.
+Return the result table in any order.
+
+Input: 
+Products table:
+
+| product_id  | product_name          | product_category |
+|-------------|-----------------------|------------------|
+| 1           | Leetcode Solutions    | Book             |
+| 2           | Jewels of Stringology | Book             |
+| 3           | HP                    | Laptop           |
+| 4           | Lenovo                | Laptop           |
+| 5           | Leetcode Kit          | T-shirt          |
+
+Orders table:
+
+| product_id   | order_date   | unit     |
+|--------------|--------------|----------|
+| 1            | 2020-02-05   | 60       |
+| 1            | 2020-02-10   | 70       |
+| 2            | 2020-01-18   | 30       |
+| 2            | 2020-02-11   | 80       |
+| 3            | 2020-02-17   | 2        |
+| 3            | 2020-02-24   | 3        |
+| 4            | 2020-03-01   | 20       |
+| 4            | 2020-03-04   | 30       |
+| 4            | 2020-03-04   | 60       |
+| 5            | 2020-02-25   | 50       |
+| 5            | 2020-02-27   | 50       |
+| 5            | 2020-03-01   | 50       |
+
+Output: 
+
+| product_name       | unit    |
+|--------------------|---------|
+| Leetcode Solutions | 130     |
+| Leetcode Kit       | 100     |
+
+```sql
+WITH CTE AS (
+SELECT 
+      o.product_id,
+      o.order_date,
+      o.unit,
+      p.product_name
+ FROM Orders AS o
+ JOIN Products AS p ON o.product_id = p.product_id
+WHERE o.order_date BETWEEN '2020-02-01' AND '2020-02-29')
+SELECT product_name,
+       sum(unit) AS 'unit'
+ FROM CTE 
+ GROUP BY product_name
+HAVING sum(unit) >= 100;
+```
